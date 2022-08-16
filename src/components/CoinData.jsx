@@ -1,10 +1,44 @@
 import { useQuery } from "react-query";
+import { useDispatch, useSelector } from "react-redux";
+import React, { useEffect, useState } from "react";
 import "./CoinData.css";
+import { getDataAsync } from "../redux/coinReducer";
+import useInterval from "../utils/useInterval";
 
 const CoinData = () => {
+  const [loading, setLoading] = useState(false);
+  const dispatch = useDispatch();
+  const { coinData } = useSelector((state) => state.coinReducer);
+
+  const [count, setCount] = useState(0);
+  const [delay, setDelay] = useState(10000);
+
+  useInterval(() => {
+    // Your custom logic here
+    dispatch(getDataAsync());
+  }, delay);
+
+  function handleDelayChange(e) {
+    setDelay(Number(e.target.value));
+  }
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        dispatch(getDataAsync());
+        setLoading(false);
+      } catch (e) {
+        console.error(e);
+      }
+    };
+    fetchData();
+  }, []);
+
   const order_currency = "BTC";
   const payment_currency = "KRW";
   const API = `https://api.bithumb.com/public/transaction_history/`;
+
   const { isLoading, error, data, isFetching } = useQuery(
     [order_currency, payment_currency],
     () =>
@@ -24,6 +58,8 @@ const CoinData = () => {
   return (
     <div id="container">
       <h1>실시간 BTC-KRW 거래 데이터</h1>
+
+      <input value={delay} onChange={handleDelayChange} />
 
       <div id="datas">
         {data.map((v, i) => {
